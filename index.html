@@ -3,581 +3,548 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Grid Token Game Engine - Wythoff & Nim Strategy Workbench</title>
-    
-    <!-- Tailwind CSS CDN -->
+    <title>Grid Token Game Engine (Wythoff's Nim & Grid Nim)</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Lucide Icons CDN -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-
-    <!-- Tailwind Custom Configuration -->
     <script>
         tailwind.config = {
             darkMode: 'class',
             theme: {
                 extend: {
                     colors: {
-                        blueprint: '#0b0f19',
-                        panel: '#111827',
-                        panelBorder: '#1e293b',
-                        neonGreen: '#10b981',
-                        neonCyan: '#06b6d4',
-                        neonAmber: '#f59e0b',
-                        neonRose: '#f43f5e',
-                        neonPurple: '#a855f7'
+                        cyber: {
+                            900: '#0B0F19',
+                            800: '#111827',
+                            700: '#1F2937',
+                            cyan: '#06B6D4',
+                            emerald: '#10B981',
+                            purple: '#A855F7',
+                            amber: '#F59E0B',
+                            rose: '#F43F5E'
+                        }
                     },
                     fontFamily: {
-                        mono: ['JetBrains Mono', 'Fira Code', 'Consolas', 'monospace'],
-                        sans: ['Inter', 'system-ui', 'sans-serif']
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'Fira Code', 'monospace']
                     }
                 }
             }
         }
     </script>
-
-    <!-- Custom CSS Styles -->
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600;700&display=swap');
+        
         body {
-            background-color: #0b0f19;
-            background-image: 
-                radial-gradient(circle at 50% 0%, rgba(6, 182, 212, 0.08) 0%, transparent 70%),
-                linear-gradient(to right, rgba(255, 255, 255, 0.025) 1px, transparent 1px),
-                linear-gradient(to bottom, rgba(255, 255, 255, 0.025) 1px, transparent 1px);
-            background-size: 100% 100%, 24px 24px, 24px 24px;
-            color: #f8fafc;
-            min-height: 100vh;
+            font-family: 'Inter', sans-serif;
+            background-color: #080C14;
+            color: #F3F4F6;
         }
 
-        .glow-emerald {
-            box-shadow: 0 0 20px rgba(16, 185, 129, 0.3);
-            border-color: rgba(16, 185, 129, 0.7);
+        .glass-panel {
+            background: rgba(17, 24, 39, 0.75);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
         }
 
-        .glow-cyan {
-            box-shadow: 0 0 20px rgba(6, 182, 212, 0.3);
-            border-color: rgba(6, 182, 212, 0.7);
-        }
-
-        .glow-rose {
-            box-shadow: 0 0 20px rgba(244, 63, 94, 0.3);
-            border-color: rgba(244, 63, 94, 0.7);
-        }
-
-        .glow-amber {
-            box-shadow: 0 0 20px rgba(245, 158, 11, 0.3);
-            border-color: rgba(245, 158, 11, 0.7);
-        }
-
-        /* Custom scrollbar styling */
-        ::-webkit-scrollbar {
+        .custom-scrollbar::-webkit-scrollbar {
             width: 6px;
-            height: 6px;
         }
-        ::-webkit-scrollbar-track {
-            background: #0b0f19;
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.6);
+            border-radius: 4px;
         }
-        ::-webkit-scrollbar-thumb {
-            background: #1e293b;
-            border-radius: 3px;
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: rgba(51, 65, 85, 0.8);
+            border-radius: 4px;
         }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #334155;
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+            background: rgba(6, 182, 212, 0.5);
         }
 
-        /* Canvas cursor customization */
-        canvas#game-canvas {
+        canvas {
             touch-action: none;
-            cursor: pointer;
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% { opacity: 0.8; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.05); }
+        }
+        .animate-glow {
+            animation: pulseGlow 2s infinite ease-in-out;
         }
     </style>
 </head>
-<body class="font-sans antialiased flex flex-col min-h-screen text-slate-100 selection:bg-cyan-500 selection:text-slate-950">
+<body class="min-h-screen flex flex-col justify-between bg-gradient-to-br from-gray-950 via-slate-900 to-gray-950 text-slate-100 p-3 sm:p-6 select-none">
 
-    <!-- Application Header -->
-    <header class="border-b border-slate-800 bg-slate-950/90 backdrop-blur-md sticky top-0 z-40">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-            <div class="flex items-center space-x-3">
-                <div class="p-2 bg-gradient-to-br from-cyan-500/20 to-emerald-500/20 border border-cyan-500/40 rounded-xl text-cyan-400 glow-cyan">
-                    <i data-lucide="grid" class="w-6 h-6"></i>
+    <!-- HEADER BAR -->
+    <header class="w-full max-w-7xl mx-auto mb-4">
+        <div class="glass-panel rounded-2xl p-4 flex flex-col md:flex-row items-center justify-between gap-4 border border-cyan-500/20 shadow-cyan-950/20 shadow-lg">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-cyan-500 to-purple-600 flex items-center justify-center text-2xl shadow-lg shadow-cyan-500/20">
+                    ♛
                 </div>
                 <div>
-                    <h1 class="text-base sm:text-lg font-extrabold tracking-tight bg-gradient-to-r from-cyan-400 via-emerald-400 to-amber-400 bg-clip-text text-transparent uppercase font-mono">
-                        GRID TOKEN GAME WORKBENCH
+                    <h1 class="text-xl sm:text-2xl font-bold bg-gradient-to-r from-cyan-400 via-teal-300 to-purple-400 bg-clip-text text-transparent">
+                        Grid Token Game Engine
                     </h1>
-                    <p class="text-xs text-slate-400 font-mono hidden sm:block">Combinatorial Game Theory Engine • Wythoff's Nim & Sprague-Grundy Solver</p>
+                    <p class="text-xs text-slate-400">Wythoff's Nim, Grid Nim & Sprague-Grundy Game Theory Simulator</p>
                 </div>
             </div>
 
-            <!-- Top Header Indicators & Controls -->
-            <div class="flex items-center space-x-2 sm:space-x-4">
-                <div id="position-status-badge" class="px-3 py-1.5 rounded-lg text-xs font-mono font-bold flex items-center space-x-1.5 bg-slate-900 border border-slate-800 text-slate-400">
-                    <span class="w-2 h-2 rounded-full bg-slate-500 animate-pulse"></span>
-                    <span>STATE: LOADING</span>
-                </div>
-
-                <button onclick="toggleTheoryModal()" class="px-3 py-1.5 text-xs font-semibold rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition flex items-center space-x-1.5">
-                    <i data-lucide="book-open" class="w-4 h-4 text-cyan-400"></i>
-                    <span class="hidden md:inline">Math Guide</span>
+            <!-- Global Action Controls -->
+            <div class="flex items-center gap-2">
+                <button onclick="toggleAudio()" id="audioBtn" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300 transition flex items-center gap-1.5 border border-slate-700">
+                    <span id="audioIcon">🔊</span> <span id="audioText">Sound ON</span>
+                </button>
+                <button onclick="openTheoryModal()" class="px-3 py-2 rounded-xl bg-gradient-to-r from-cyan-600 to-teal-600 hover:from-cyan-500 hover:to-teal-500 text-xs font-semibold text-white transition shadow-md shadow-cyan-900/40 flex items-center gap-1.5">
+                    📚 Math & Theory Guide
                 </button>
             </div>
         </div>
     </header>
 
-    <!-- Main Content Container -->
-    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+    <!-- MAIN APP GRID -->
+    <main class="w-full max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-12 gap-5 flex-grow">
 
-        <!-- Top Control Bar -->
-        <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xl backdrop-blur-sm space-y-4">
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-4 items-end">
-                
-                <!-- Ruleset Selection -->
-                <div class="lg:col-span-4">
-                    <label class="block text-xs font-mono uppercase tracking-wider text-slate-400 mb-1.5 flex items-center gap-1.5">
-                        <i data-lucide="gamepad-2" class="w-3.5 h-3.5 text-cyan-400"></i>
-                        <span>Rule Variation</span>
-                    </label>
-                    <select id="ruleset-select" onchange="changeRuleset()" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs font-mono text-slate-200 focus:ring-2 focus:ring-cyan-500 outline-none transition">
-                        <option value="wythoff">Wythoff's Queen Nim (Left, Down, Diagonal)</option>
-                        <option value="rook">Rook Nim / 2-Pile Nim (Left, Down)</option>
-                        <option value="king">King Nim (1 Space: Left, Down, Diagonal)</option>
-                    </select>
-                </div>
-
-                <!-- Tunable Grid Width Slider -->
-                <div class="lg:col-span-2">
-                    <div class="flex justify-between text-xs font-mono mb-1">
-                        <span class="text-slate-400">WIDTH (X)</span>
-                        <span id="grid-w-val" class="text-cyan-400 font-bold">10</span>
-                    </div>
-                    <input type="range" id="grid-w-slider" min="3" max="20" value="10" oninput="updateGridDimensions()" class="w-full accent-cyan-400 bg-slate-950 rounded-lg cursor-pointer">
-                </div>
-
-                <!-- Tunable Grid Height Slider -->
-                <div class="lg:col-span-2">
-                    <div class="flex justify-between text-xs font-mono mb-1">
-                        <span class="text-slate-400">HEIGHT (Y)</span>
-                        <span id="grid-h-val" class="text-emerald-400 font-bold">10</span>
-                    </div>
-                    <input type="range" id="grid-h-slider" min="3" max="20" value="10" oninput="updateGridDimensions()" class="w-full accent-emerald-400 bg-slate-950 rounded-lg cursor-pointer">
-                </div>
-
-                <!-- Player Mode Selection -->
-                <div class="lg:col-span-4">
-                    <label class="block text-xs font-mono uppercase tracking-wider text-slate-400 mb-1.5 flex items-center gap-1.5">
-                        <i data-lucide="users" class="w-3.5 h-3.5 text-amber-400"></i>
-                        <span>Player Mode</span>
-                    </label>
-                    <select id="mode-select" onchange="changePlayerMode()" class="w-full bg-slate-950 border border-slate-700 rounded-xl px-3 py-2 text-xs font-mono text-slate-200 focus:ring-2 focus:ring-amber-500 outline-none transition">
-                        <option value="human_vs_ai_optimal">Human vs AI (Optimal / Grundy Bot)</option>
-                        <option value="human_vs_ai_easy">Human vs AI (Casual / Easy Bot)</option>
-                        <option value="human_vs_human">Human vs Human (Pass & Play)</option>
-                        <option value="ai_vs_ai">AI vs AI (Simulation Mode)</option>
-                    </select>
-                </div>
-            </div>
-
-            <!-- Controls & Overlay Toggles Row -->
-            <div class="pt-3 border-t border-slate-800 flex flex-wrap items-center justify-between gap-3 text-xs">
-                
-                <!-- Strategy Toggles -->
-                <div class="flex flex-wrap items-center gap-2 font-mono">
-                    <button onclick="toggleOverlay('heatmap')" id="btn-toggle-heatmap" class="px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-950 hover:bg-slate-800 text-slate-300 transition flex items-center space-x-1.5">
-                        <i data-lucide="eye" class="w-3.5 h-3.5 text-cyan-400"></i>
-                        <span>P/N Heatmap</span>
-                    </button>
-
-                    <button onclick="toggleOverlay('grundy')" id="btn-toggle-grundy" class="px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-950 hover:bg-slate-800 text-slate-300 transition flex items-center space-x-1.5">
-                        <i data-lucide="binary" class="w-3.5 h-3.5 text-emerald-400"></i>
-                        <span>Grundy Numbers G(x,y)</span>
-                    </button>
-
-                    <button onclick="toggleOverlay('hints')" id="btn-toggle-hints" class="px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-950 hover:bg-slate-800 text-slate-300 transition flex items-center space-x-1.5">
-                        <i data-lucide="zap" class="w-3.5 h-3.5 text-amber-400"></i>
-                        <span>Move Hints</span>
-                    </button>
-
-                    <button onclick="toggleSound()" id="btn-toggle-sound" class="px-3 py-1.5 rounded-lg border border-slate-700 bg-slate-950 hover:bg-slate-800 text-slate-300 transition flex items-center space-x-1.5">
-                        <i data-lucide="volume-2" id="sound-icon" class="w-3.5 h-3.5 text-purple-400"></i>
-                        <span id="sound-label">Audio: ON</span>
-                    </button>
-                </div>
-
-                <!-- Action Buttons -->
-                <div class="flex items-center space-x-2">
-                    <button onclick="randomizeStartPosition()" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold rounded-xl border border-slate-700 transition flex items-center space-x-1">
-                        <i data-lucide="shuffle" class="w-3.5 h-3.5 text-cyan-400"></i>
-                        <span>Random Start</span>
-                    </button>
-
-                    <button onclick="resetGame()" class="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-slate-950 font-bold rounded-xl transition flex items-center space-x-1.5 glow-cyan">
-                        <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
-                        <span>RESET GAME</span>
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Main Interactive Game Area (Grid + Analytics Panel) -->
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+        <!-- LEFT COLUMN: GRID BOARD & RULESET CONFIG (7 COLS) -->
+        <section class="lg:col-span-7 flex flex-col gap-4">
             
-            <!-- Left Column: HTML5 Cartesian Canvas Renderer -->
-            <div class="lg:col-span-7 xl:col-span-8 bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-5 flex flex-col items-center justify-between shadow-xl">
-                
-                <!-- Canvas Top Bar Status -->
-                <div class="w-full flex items-center justify-between mb-3 text-xs font-mono">
-                    <div class="flex items-center space-x-2">
-                        <span class="text-slate-400">TURN:</span>
-                        <span id="current-player-display" class="font-bold text-cyan-400 bg-slate-950 px-2.5 py-1 rounded border border-slate-800">
-                            PLAYER 1 (HUMAN)
-                        </span>
+            <!-- 1. GRID DIMENSIONS CONFIGURATION SLIDERS WITH RANDOM BUTTON IN THE MIDDLE -->
+            <div class="glass-panel rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div class="w-full sm:w-[42%]">
+                    <div class="flex justify-between text-xs mb-1">
+                        <span class="text-slate-400 font-medium">Grid Width (X Axis):</span>
+                        <span id="widthVal" class="font-bold text-cyan-400 font-mono">8</span>
                     </div>
-
-                    <div class="flex items-center space-x-3 text-[11px]">
-                        <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-emerald-500 inline-block"></span> Target (0,0)</span>
-                        <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-cyan-400 inline-block"></span> Token</span>
-                        <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-emerald-950 border border-emerald-500 inline-block"></span> P-Pos (G=0)</span>
-                    </div>
+                    <input type="range" id="widthSlider" min="3" max="20" value="8" oninput="updateGridDimensions()" class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-500">
                 </div>
 
-                <!-- Canvas Wrapper -->
-                <div class="relative w-full aspect-square max-w-[560px] bg-slate-950 border border-slate-800 rounded-xl overflow-hidden shadow-inner flex items-center justify-center p-2">
-                    <canvas id="game-canvas" class="w-full h-full block rounded-lg"></canvas>
-                    
-                    <!-- AI Thinking Overlay Spinner -->
-                    <div id="ai-thinking-indicator" class="absolute inset-0 bg-slate-950/60 backdrop-blur-sm hidden flex-col items-center justify-center space-y-2 z-20">
-                        <div class="w-8 h-8 border-4 border-cyan-400 border-t-transparent rounded-full animate-spin"></div>
-                        <span class="text-xs font-mono font-bold text-cyan-400 tracking-wider">AI CALCULATING OPTIMAL MOVE...</span>
-                    </div>
+                <!-- Randomize Start Position Button placed in the middle between Width and Height sliders -->
+                <div class="flex items-center justify-center shrink-0">
+                    <button onclick="randomizePosition()" class="px-3.5 py-2 rounded-xl bg-slate-800/90 hover:bg-slate-700 border border-cyan-500/30 hover:border-cyan-400 text-xs font-semibold text-cyan-300 transition flex items-center gap-1.5 shadow-md shadow-cyan-950/40">
+                        🎲 Random Position
+                    </button>
                 </div>
 
-                <!-- Canvas Bottom Hint Bar -->
-                <div class="w-full mt-3 pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400 font-mono">
-                    <span class="flex items-center gap-1">
-                        <i data-lucide="mouse-pointer-click" class="w-3.5 h-3.5 text-cyan-400"></i>
-                        <span>Click any valid cell along trajectory to move token towards (0,0).</span>
-                    </span>
-                    <span id="canvas-pos-hover" class="text-cyan-400 font-bold">HOVER: (-,-)</span>
+                <div class="w-full sm:w-[42%]">
+                    <div class="flex justify-between text-xs mb-1">
+                        <span class="text-slate-400 font-medium">Grid Height (Y Axis):</span>
+                        <span id="heightVal" class="font-bold text-cyan-400 font-mono">8</span>
+                    </div>
+                    <input type="range" id="heightSlider" min="3" max="20" value="8" oninput="updateGridDimensions()" class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-500">
                 </div>
             </div>
 
-            <!-- Right Column: Game Theory Diagnostics & Move Assistant -->
-            <div class="lg:col-span-5 xl:col-span-4 space-y-5">
-                
-                <!-- Position Diagnostics Panel -->
-                <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xl space-y-4">
-                    <h2 class="text-xs font-bold uppercase tracking-wider text-slate-300 font-mono flex items-center justify-between">
-                        <span class="flex items-center space-x-2">
-                            <i data-lucide="cpu" class="w-4 h-4 text-cyan-400"></i>
-                            <span>REAL-TIME DIAGNOSTICS</span>
-                        </span>
-                        <span id="diag-rule-badge" class="text-[10px] bg-slate-950 text-cyan-400 px-2 py-0.5 rounded border border-slate-800">
-                            WYTHOFF
-                        </span>
-                    </h2>
-
-                    <!-- Diagnostics Metrics Box -->
-                    <div class="grid grid-cols-2 gap-3 text-xs font-mono">
-                        <div class="bg-slate-950 border border-slate-800 p-3 rounded-xl">
-                            <span class="text-slate-400 block text-[10px]">CURRENT TOKEN (X,Y)</span>
-                            <span id="diag-coord" class="text-lg font-bold text-cyan-400">(0,0)</span>
-                        </div>
-                        <div class="bg-slate-950 border border-slate-800 p-3 rounded-xl">
-                            <span class="text-slate-400 block text-[10px]">GRUNDY VALUE G(x,y)</span>
-                            <span id="diag-grundy" class="text-lg font-bold text-amber-400">0</span>
-                        </div>
-                    </div>
-
-                    <!-- Strategic Classification Card -->
-                    <div id="diag-class-card" class="p-3.5 rounded-xl border bg-slate-950 border-slate-800 space-y-1 text-xs">
-                        <!-- Dynamic JS Content -->
-                    </div>
-
-                    <!-- Recommended Winning Moves List -->
-                    <div class="space-y-2">
-                        <div class="flex items-center justify-between text-xs font-mono">
-                            <span class="text-slate-400">RECOMMENDED WINNING MOVES</span>
-                            <span id="winning-moves-count" class="text-emerald-400 font-bold">0 MOVES</span>
-                        </div>
-                        <div id="winning-moves-list" class="max-h-32 overflow-y-auto space-y-1.5 pr-1 text-xs font-mono">
-                            <!-- Dynamic Winning Move Buttons -->
-                        </div>
-                    </div>
+            <!-- 2. RULESETS SELECTION BUTTONS (CHESS SYMBOLS) -->
+            <div class="glass-panel rounded-2xl p-3">
+                <div class="text-xs uppercase tracking-wider text-slate-400 font-semibold mb-2 px-1">Select Ruleset:</div>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    <button onclick="setRuleset('queen')" id="btnRuleQueen" class="ruleset-btn py-2.5 px-2 rounded-xl border border-cyan-500/50 bg-cyan-950/40 text-cyan-300 flex flex-col items-center gap-1 transition text-xs font-semibold shadow-inner">
+                        <span class="text-2xl">♛</span>
+                        <span>Wythoff's Queen</span>
+                    </button>
+                    <button onclick="setRuleset('rook')" id="btnRuleRook" class="ruleset-btn py-2.5 px-2 rounded-xl border border-slate-700 bg-slate-900/60 text-slate-400 flex flex-col items-center gap-1 transition text-xs font-semibold hover:bg-slate-800">
+                        <span class="text-2xl">♜</span>
+                        <span>Rook (2-Pile Nim)</span>
+                    </button>
+                    <button onclick="setRuleset('king')" id="btnRuleKing" class="ruleset-btn py-2.5 px-2 rounded-xl border border-slate-700 bg-slate-900/60 text-slate-400 flex flex-col items-center gap-1 transition text-xs font-semibold hover:bg-slate-800">
+                        <span class="text-2xl">♚</span>
+                        <span>King Nim</span>
+                    </button>
+                    <button onclick="setRuleset('pawn')" id="btnRulePawn" class="ruleset-btn py-2.5 px-2 rounded-xl border border-slate-700 bg-slate-900/60 text-slate-400 flex flex-col items-center gap-1 transition text-xs font-semibold hover:bg-slate-800">
+                        <span class="text-2xl">♟</span>
+                        <span>Pawn Nim</span>
+                    </button>
                 </div>
-
-                <!-- Move History Log Card -->
-                <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4 sm:p-5 shadow-xl space-y-3">
-                    <div class="flex items-center justify-between">
-                        <h3 class="text-xs font-bold uppercase tracking-wider text-slate-300 font-mono flex items-center space-x-2">
-                            <i data-lucide="history" class="w-4 h-4 text-amber-400"></i>
-                            <span>MOVE HISTORY & GRUNDY LOG</span>
-                        </h3>
-                        <span id="turn-counter-badge" class="text-xs font-mono text-slate-400">TURN 1</span>
-                    </div>
-
-                    <div id="move-history-container" class="max-h-48 overflow-y-auto space-y-1.5 text-xs font-mono pr-1">
-                        <div class="p-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-500 italic text-center">
-                            Game initialized. Move the token to begin!
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-        </div>
-
-        <!-- Game Theory Foundations Breakdown Cards -->
-        <section class="bg-slate-900/90 border border-slate-800 rounded-2xl p-5 sm:p-6 shadow-xl space-y-4">
-            <div class="flex items-center justify-between border-b border-slate-800 pb-3">
-                <h3 class="text-sm font-bold uppercase tracking-wider text-slate-200 font-mono flex items-center space-x-2">
-                    <i data-lucide="graduation-cap" class="w-5 h-5 text-emerald-400"></i>
-                    <span>Combinatorial Game Theory Mathematical Principles</span>
-                </h3>
-                <span class="text-xs font-mono text-slate-400">Sprague-Grundy & Impartial Games</span>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 text-xs text-slate-300">
+            <!-- 3. MAIN CANVAS PLAYFIELD CONTAINER -->
+            <div class="glass-panel rounded-2xl p-4 flex flex-col items-center justify-center relative min-h-[420px] border border-slate-800/80 shadow-2xl overflow-hidden">
                 
-                <!-- Sprague-Grundy & MEX -->
-                <div class="bg-slate-950 border border-slate-800/80 rounded-xl p-4 space-y-2">
-                    <div class="flex items-center space-x-2 text-cyan-400 font-bold font-mono uppercase">
-                        <i data-lucide="binary" class="w-4 h-4"></i>
-                        <span>1. Grundy Value & MEX</span>
-                    </div>
-                    <p class="text-slate-400 leading-relaxed">
-                        Every position $(x,y)$ in an impartial game under normal play has a Grundy value equal to the <strong>Minimum Excluded value (MEX)</strong> of all reachable positions:
-                    </p>
-                    <div class="p-2 bg-slate-900 border border-slate-800 rounded font-mono text-[11px] text-emerald-400">
-                        G(x,y) = MEX({ G(x',y') | (x',y') is reachable })
-                    </div>
+                <!-- Game Canvas -->
+                <canvas id="gameCanvas" class="cursor-pointer rounded-xl shadow-2xl max-w-full touch-none border border-slate-800"></canvas>
+                
+                <!-- Token Position Indicator Badge -->
+                <div class="absolute top-6 left-6 px-3 py-1.5 rounded-xl bg-slate-950/90 backdrop-blur border border-slate-700 text-xs text-slate-300 shadow flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-cyan-400 animate-pulse"></span>
+                    <span>Position: <strong id="tokenPosDisplay" class="text-cyan-300 font-mono">(7, 7)</strong></span>
+                    <span class="text-slate-600">|</span>
+                    <span>Grundy <strong id="tokenGrundyDisplay" class="text-amber-400 font-mono">G = ?</strong></span>
                 </div>
+            </div>
 
-                <!-- P-Positions vs N-Positions -->
-                <div class="bg-slate-950 border border-slate-800/80 rounded-xl p-4 space-y-2">
-                    <div class="flex items-center space-x-2 text-emerald-400 font-bold font-mono uppercase">
-                        <i data-lucide="shield-check" class="w-4 h-4"></i>
-                        <span>2. P-Positions vs N-Positions</span>
-                    </div>
-                    <p class="text-slate-400 leading-relaxed">
-                        <strong>P-Positions ($G = 0$)</strong>: Previous player wins. Moving from $G=0$ always leads to $G > 0$.<br>
-                        <strong>N-Positions ($G > 0$)</strong>: Next player wins. There is always at least one move to a $G=0$ position.
-                    </p>
-                </div>
+            <!-- 4. VISUAL STRATEGY TOGGLES BAR -->
+            <div class="glass-panel rounded-2xl p-3 flex flex-wrap items-center justify-around gap-3 text-xs">
+                <label class="flex items-center gap-2 cursor-pointer px-3 py-1.5 rounded-lg hover:bg-slate-800/60 transition select-none">
+                    <input type="checkbox" id="toggleHeatmap" onchange="drawCanvas()" class="w-4 h-4 rounded accent-cyan-500 cursor-pointer">
+                    <span class="font-medium text-slate-300">P/N Heatmap</span>
+                    <span class="w-2.5 h-2.5 rounded-full bg-emerald-500/80 inline-block" title="P-position (G=0 Target)"></span>
+                    <span class="w-2.5 h-2.5 rounded-full bg-amber-500/80 inline-block" title="N-position (G>0 Non-zero)"></span>
+                </label>
 
-                <!-- Wythoff's Game & Golden Ratio -->
-                <div class="bg-slate-950 border border-slate-800/80 rounded-xl p-4 space-y-2">
-                    <div class="flex items-center space-x-2 text-amber-400 font-bold font-mono uppercase">
-                        <i data-lucide="sparkles" class="w-4 h-4"></i>
-                        <span>3. Golden Ratio ($\phi$) in Wythoff</span>
-                    </div>
-                    <p class="text-slate-400 leading-relaxed">
-                        Wythoff's P-positions $(a_n, b_n)$ follow Beatty's Theorem and the Golden Ratio $\phi = \frac{1+\sqrt{5}}{2} \approx 1.618$:
-                    </p>
-                    <div class="p-2 bg-slate-900 border border-slate-800 rounded font-mono text-[11px] text-amber-400">
-                        a_n = ⌊n · φ⌋,  b_n = ⌊n · φ²⌋ = a_n + n
-                    </div>
-                </div>
+                <label class="flex items-center gap-2 cursor-pointer px-3 py-1.5 rounded-lg hover:bg-slate-800/60 transition select-none">
+                    <input type="checkbox" id="toggleGrundy" onchange="drawCanvas()" class="w-4 h-4 rounded accent-cyan-500 cursor-pointer">
+                    <span class="font-medium text-slate-300">Grundy Values G(x,y)</span>
+                </label>
 
-                <!-- Rook Nim & Bouton's Theorem -->
-                <div class="bg-slate-950 border border-slate-800/80 rounded-xl p-4 space-y-2">
-                    <div class="flex items-center space-x-2 text-purple-400 font-bold font-mono uppercase">
-                        <i data-lucide="git-commit" class="w-4 h-4"></i>
-                        <span>4. Nim-Sum & XOR Addition</span>
-                    </div>
-                    <p class="text-slate-400 leading-relaxed">
-                        In 2-Pile Rook Nim, moves operate independently per axis. By Bouton's Theorem, the Grundy value equals the bitwise XOR sum:
-                    </p>
-                    <div class="p-2 bg-slate-900 border border-slate-800 rounded font-mono text-[11px] text-purple-400">
-                        G(x,y) = x ⊕ y  ⇒  P-Positions when x = y
-                    </div>
-                </div>
-
+                <label class="flex items-center gap-2 cursor-pointer px-3 py-1.5 rounded-lg hover:bg-slate-800/60 transition select-none">
+                    <input type="checkbox" id="toggleValidMoves" onchange="drawCanvas()" checked class="w-4 h-4 rounded accent-cyan-500 cursor-pointer">
+                    <span class="font-medium text-slate-300">Move Color Highlights</span>
+                </label>
             </div>
         </section>
 
+        <!-- RIGHT COLUMN: GAME MODE, AI SIMULATION & HISTORY LOG (5 COLS) -->
+        <section class="lg:col-span-5 flex flex-col gap-4">
+            
+            <!-- 1. GAME MODE BUTTON GROUP SELECTION -->
+            <div class="glass-panel rounded-2xl p-3">
+                <div class="text-xs uppercase tracking-wider text-slate-400 font-semibold mb-2 px-1">Game Mode:</div>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                    <button onclick="setGameMode('human_human')" id="btnModeHH" class="gamemode-btn py-2 px-1.5 rounded-xl border border-cyan-500/50 bg-cyan-950/40 text-cyan-300 flex flex-col items-center gap-0.5 transition text-[11px] font-semibold shadow-inner">
+                        <span class="text-base">👥</span>
+                        <span>Human v Human</span>
+                    </button>
+                    <button onclick="setGameMode('human_ai')" id="btnModeHA" class="gamemode-btn py-2 px-1.5 rounded-xl border border-slate-700 bg-slate-900/60 text-slate-400 flex flex-col items-center gap-0.5 transition text-[11px] font-semibold hover:bg-slate-800">
+                        <span class="text-base">👤🤖</span>
+                        <span>Human v AI</span>
+                    </button>
+                    <button onclick="setGameMode('ai_human')" id="btnModeAH" class="gamemode-btn py-2 px-1.5 rounded-xl border border-slate-700 bg-slate-900/60 text-slate-400 flex flex-col items-center gap-0.5 transition text-[11px] font-semibold hover:bg-slate-800">
+                        <span class="text-base">🤖👤</span>
+                        <span>AI v Human</span>
+                    </button>
+                    <button onclick="setGameMode('ai_ai')" id="btnModeAA" class="gamemode-btn py-2 px-1.5 rounded-xl border border-slate-700 bg-slate-900/60 text-slate-400 flex flex-col items-center gap-0.5 transition text-[11px] font-semibold hover:bg-slate-800">
+                        <span class="text-base">🤖🤖</span>
+                        <span>AI v AI Sim</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 2. GAME STATUS & QUICK ACTIONS BANNER -->
+            <div id="statusCard" class="glass-panel rounded-2xl p-4 border border-cyan-500/30 flex items-center justify-between">
+                <div>
+                    <div class="text-[10px] uppercase tracking-wider text-slate-400 font-semibold mb-0.5">Turn Status</div>
+                    <div id="turnStatus" class="text-base sm:text-lg font-bold text-cyan-300 flex items-center gap-2">
+                        <span id="turnDot" class="w-3 h-3 rounded-full bg-cyan-400 animate-ping"></span>
+                        <span id="turnText">Player 1 (Human)</span>
+                    </div>
+                </div>
+                
+                <div class="flex gap-1.5 flex-wrap justify-end">
+                    <button onclick="undoMove()" class="px-2.5 py-1.5 rounded-lg text-xs bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 transition font-medium">
+                        ↩ Undo
+                    </button>
+                    <button onclick="resetBoard()" class="px-2.5 py-1.5 rounded-lg text-xs bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 transition font-medium">
+                        🔄 Reset
+                    </button>
+                </div>
+            </div>
+
+            <!-- 3. AI SETTINGS & SIMULATION CONTROLS PANEL -->
+            <div id="aiControlPanel" class="glass-panel rounded-2xl p-4 flex flex-col gap-3">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+                        <span>🤖</span> AI Competitor Strategy:
+                    </span>
+                    <select id="aiDifficulty" onchange="updateAIDifficulty()" class="bg-slate-900 border border-slate-700 text-cyan-300 text-xs rounded-lg px-2.5 py-1 font-semibold focus:outline-none focus:border-cyan-500">
+                        <option value="optimal">Optimal (Unbeatable Grundy AI)</option>
+                        <option value="casual">Casual (Easy AI)</option>
+                    </select>
+                </div>
+
+                <!-- Simulation Mode Specific Sub-Controls -->
+                <div id="simControls" class="hidden flex flex-col gap-3 pt-2 border-t border-slate-800">
+                    <div class="flex items-center justify-between gap-2">
+                        <button id="simPlayBtn" onclick="toggleSimPlay()" class="flex-1 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs transition flex items-center justify-center gap-1">
+                            <span>▶</span> Play Auto-Sim
+                        </button>
+                        <button onclick="stepSim()" class="py-1.5 px-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs border border-slate-700 transition">
+                            ⏭ Step Move
+                        </button>
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between text-[11px] text-slate-400 mb-1">
+                            <span>Simulation Speed:</span>
+                            <span id="speedVal" class="font-mono text-cyan-400">500ms</span>
+                        </div>
+                        <input type="range" id="speedSlider" min="100" max="2000" step="100" value="500" oninput="updateSimSpeed()" class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-cyan-500">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 4. MOVE HISTORY LOG PANEL -->
+            <div class="glass-panel rounded-2xl p-4 flex-grow flex flex-col min-h-[220px]">
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
+                        <span>📜</span> Move History Log
+                    </h3>
+                    <span id="historyCount" class="text-[10px] font-mono bg-slate-800 text-slate-400 px-2 py-0.5 rounded-full border border-slate-700">0 Moves</span>
+                </div>
+
+                <div id="moveHistoryList" class="custom-scrollbar flex-grow overflow-y-auto max-h-[260px] space-y-1.5 pr-1 text-xs font-mono">
+                    <div class="text-slate-500 text-center py-8 italic font-sans text-xs">
+                        No moves played yet. Click any highlighted target square to make a move!
+                    </div>
+                </div>
+            </div>
+
+        </section>
     </main>
 
-    <!-- Theory Guide Modal -->
-    <div id="theory-modal" class="fixed inset-0 z-50 hidden bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
-        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-2xl w-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
-            <div class="px-6 py-4 border-b border-slate-800 flex items-center justify-between">
-                <h3 class="text-sm font-bold tracking-wider uppercase text-cyan-400 font-mono flex items-center space-x-2">
-                    <i data-lucide="book-open" class="w-4 h-4"></i>
-                    <span>COMBINATORIAL GAME THEORY COMPENDIUM</span>
-                </h3>
-                <button onclick="toggleTheoryModal()" class="text-slate-400 hover:text-slate-200">
-                    <i data-lucide="x" class="w-5 h-5"></i>
+    <!-- THEORY & MATHEMATICAL EXPLANATION MODAL -->
+    <div id="theoryModal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="glass-panel rounded-2xl max-w-3xl w-full max-h-[90vh] flex flex-col border border-cyan-500/30 shadow-2xl overflow-hidden">
+            <!-- Modal Header -->
+            <div class="p-4 sm:p-6 border-b border-slate-800 flex items-center justify-between bg-slate-900/60">
+                <div class="flex items-center gap-3">
+                    <span class="text-2xl">📚</span>
+                    <div>
+                        <h2 class="text-lg font-bold text-cyan-300">Sprague-Grundy Theorem & Game Theory</h2>
+                        <p class="text-xs text-slate-400">Mathematical principles behind Wythoff's Nim & Grid Games</p>
+                    </div>
+                </div>
+                <button onclick="closeTheoryModal()" class="w-8 h-8 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white flex items-center justify-center text-sm transition">
+                    ✕
                 </button>
             </div>
 
-            <div class="p-6 overflow-y-auto space-y-4 text-xs text-slate-300 leading-relaxed">
-                <div class="p-3.5 bg-slate-950 border border-slate-800 rounded-xl space-y-1.5">
-                    <h4 class="font-bold text-cyan-400 font-mono uppercase">Normal Play Convention & Terminal State</h4>
-                    <p>In standard normal play combinatorial game theory, the player who makes the last legal move wins. Moving the token to $(0,0)$ leaves the board with zero legal remaining moves, sealing an immediate victory.</p>
+            <!-- Modal Content (Scrollable) -->
+            <div class="p-4 sm:p-6 custom-scrollbar overflow-y-auto space-y-5 text-slate-300 text-xs sm:text-sm leading-relaxed">
+                
+                <!-- Section 1 -->
+                <div class="bg-slate-900/60 rounded-xl p-4 border border-slate-800">
+                    <h3 class="text-cyan-400 font-bold mb-2 flex items-center gap-2 text-base">
+                        <span>1.</span> Impartial Games & Normal Play Convention
+                    </h3>
+                    <p>
+                        All games in this engine (Wythoff's Queen, Rook Nim, King Nim, Pawn Nim) are <strong>Impartial Games</strong> under the <em>Normal Play Convention</em>:
+                    </p>
+                    <ul class="list-disc list-inside mt-2 space-y-1 text-slate-400 text-xs">
+                        <li>Both players have identical available moves from any position.</li>
+                        <li>No hidden information or randomness.</li>
+                        <li>The player who makes the last legal move to <strong class="text-emerald-400">(0,0)</strong> wins the game!</li>
+                    </ul>
                 </div>
 
-                <div class="p-3.5 bg-slate-950 border border-slate-800 rounded-xl space-y-1.5">
-                    <h4 class="font-bold text-emerald-400 font-mono uppercase">Why Sprague-Grundy Works</h4>
-                    <p>By the Sprague-Grundy Theorem, any finite impartial game under normal play is isomorphic to a single-pile Nim game of size $G(x,y)$. The MEX operation guarantees that a state with $G(x,y) = k$ can transition to states with Grundy values $0, 1, \dots, k-1$.</p>
+                <!-- Section 2 -->
+                <div class="bg-slate-900/60 rounded-xl p-4 border border-slate-800">
+                    <h3 class="text-cyan-400 font-bold mb-2 flex items-center gap-2 text-base">
+                        <span>2.</span> Sprague-Grundy Theorem & MEX Function
+                    </h3>
+                    <p>
+                        By the <strong>Sprague-Grundy Theorem</strong>, every position $(x,y)$ in an impartial game is equivalent to a single Nim-pile of size $G(x,y)$.
+                    </p>
+                    <div class="my-3 p-3 bg-slate-950 rounded-lg border border-slate-800 font-mono text-xs text-amber-300">
+                        G(x, y) = MEX({ G(x', y') | (x', y') is a valid 1-step move from (x,y) })
+                    </div>
+                    <p class="text-xs text-slate-400">
+                        Where <strong>MEX (Minimum Excluded Value)</strong> is the smallest non-negative integer $\{0, 1, 2, 3, \dots\}$ not present in the set of reachable Grundy values.
+                    </p>
                 </div>
 
-                <div class="p-3.5 bg-slate-950 border border-slate-800 rounded-xl space-y-1.5">
-                    <h4 class="font-bold text-amber-400 font-mono uppercase">Wythoff's Game & The Golden Ratio Sequence</h4>
-                    <p>In Wythoff's Queen Nim, the safe $G=0$ positions are pairs $(\lfloor n\phi \rfloor, \lfloor n\phi^2 \rfloor)$: $(0,0), (1,2), (3,5), (4,7), (6,10), (8,13), \dots$ and their reflections. No two pairs share the same row, column, or diagonal!</p>
+                <!-- Section 3 -->
+                <div class="bg-slate-900/60 rounded-xl p-4 border border-slate-800">
+                    <h3 class="text-cyan-400 font-bold mb-2 flex items-center gap-2 text-base">
+                        <span>3.</span> P-Positions (Safe/Winning Target) vs N-Positions
+                    </h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
+                        <div class="p-3 bg-emerald-950/40 border border-emerald-800/60 rounded-xl">
+                            <h4 class="font-bold text-emerald-400 text-xs mb-1">P-Position (Previous Player Wins)</h4>
+                            <p class="text-[12px] text-slate-300">
+                                Equivalent to <strong>G(x,y) = 0</strong>. The player who just moved left the game in a winning state for themselves. Any move from a P-position will always lead to an N-position ($G > 0$).
+                            </p>
+                        </div>
+                        <div class="p-3 bg-amber-950/40 border border-amber-800/60 rounded-xl">
+                            <h4 class="font-bold text-amber-400 text-xs mb-1">N-Position (Next Player Wins)</h4>
+                            <p class="text-[12px] text-slate-300">
+                                Equivalent to <strong>G(x,y) &gt; 0</strong>. The current player whose turn it is can <em>always</em> make a move to reach a P-position ($G=0$) and secure victory!
+                            </p>
+                        </div>
+                    </div>
                 </div>
+
+                <!-- Section 4 -->
+                <div class="bg-slate-900/60 rounded-xl p-4 border border-slate-800">
+                    <h3 class="text-cyan-400 font-bold mb-2 flex items-center gap-2 text-base">
+                        <span>4.</span> Wythoff's Nim & Beatty's Theorem (Golden Ratio $\phi$)
+                    </h3>
+                    <p>
+                        In <strong>Wythoff's Queen Nim</strong>, the P-positions ($G=0$) form a famous mathematical spectrum governed by the <strong>Golden Ratio</strong> $\phi = \frac{1 + \sqrt{5}}{2} \approx 1.6180339887...$
+                    </p>
+                    <div class="my-3 p-3 bg-slate-950 rounded-lg border border-slate-800 font-mono text-xs text-cyan-300">
+                        P-positions = ( ⌊n · φ⌋, ⌊n · φ²⌋ ) for n = 0, 1, 2, 3...<br>
+                        Pairs: (0,0), (1,2), (3,5), (4,7), (6,10), (8,13)...
+                    </div>
+                    <p class="text-xs text-slate-400">
+                        By <strong>Beatty's Theorem</strong>, these two sequences partition the natural numbers completely without overlap!
+                    </p>
+                </div>
+
             </div>
 
-            <div class="px-6 py-3 border-t border-slate-800 bg-slate-950 flex justify-end">
-                <button onclick="toggleTheoryModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold rounded-xl">
-                    Close Guide
+            <!-- Modal Footer -->
+            <div class="p-4 border-t border-slate-800 bg-slate-900/80 flex justify-end">
+                <button onclick="closeTheoryModal()" class="px-5 py-2 rounded-xl bg-cyan-600 hover:bg-cyan-500 text-white text-xs font-semibold transition">
+                    Got it! Return to Game
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- Game Victory Overlay -->
-    <div id="victory-modal" class="fixed inset-0 z-50 hidden bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4">
-        <div class="bg-slate-900 border-2 border-emerald-500/60 rounded-2xl max-w-md w-full p-6 text-center space-y-5 shadow-2xl glow-emerald relative overflow-hidden">
-            <div class="absolute -right-10 -top-10 w-32 h-32 bg-emerald-500/10 rounded-full blur-2xl pointer-events-none"></div>
-            
-            <div class="inline-flex p-4 bg-emerald-500/10 border border-emerald-500/30 rounded-2xl text-emerald-400">
-                <i data-lucide="trophy" class="w-10 h-10 animate-bounce"></i>
-            </div>
-
-            <div>
-                <h2 class="text-xl font-extrabold font-mono text-emerald-400 uppercase tracking-wider">
-                    VICTORY ACHIEVED!
-                </h2>
-                <p id="winner-announcement-text" class="text-sm font-mono text-slate-200 mt-1">
-                    Player 1 moved to (0,0) and claimed the win!
-                </p>
-            </div>
-
-            <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 text-xs font-mono space-y-1 text-slate-400">
-                <div class="flex justify-between">
-                    <span>TOTAL MOVES:</span>
-                    <span id="stat-total-moves" class="text-cyan-400 font-bold">0</span>
-                </div>
-                <div class="flex justify-between">
-                    <span>RULE VARIATION:</span>
-                    <span id="stat-rule-name" class="text-amber-400 font-bold">Wythoff's Nim</span>
-                </div>
-            </div>
-
-            <div class="flex items-center space-x-3 pt-2">
-                <button onclick="closeVictoryModal(); resetGame();" class="w-full py-2.5 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs font-mono rounded-xl transition glow-emerald">
-                    PLAY AGAIN
-                </button>
-            </div>
-        </div>
-    </div>
-
-    <!-- Confetti Particle Canvas -->
-    <canvas id="confetti-canvas" class="fixed inset-0 pointer-events-none z-50 hidden"></canvas>
-
-
-    <!-- JavaScript Application Engine -->
+    <!-- MAIN JAVASCRIPT LOGIC -->
     <script>
-        // Global Game Configuration & State
-        let gridW = 10;
-        let gridH = 10;
-        let ruleset = 'wythoff'; // 'wythoff', 'rook', 'king'
-        let playerMode = 'human_vs_ai_optimal'; // 'human_vs_ai_optimal', 'human_vs_ai_easy', 'human_vs_human', 'ai_vs_ai'
-        
-        let tokenPos = { x: 9, y: 9 };
-        let currentPlayer = 1; // 1 or 2
-        let turnCount = 1;
-        let gameActive = true;
-        let isAiThinking = false;
-        let moveHistory = [];
+        /* ==========================================================================
+           ENGINE STATE & GLOBALS
+           ========================================================================== */
+        let gridW = 8;
+        let gridH = 8;
+        let currentRuleset = 'queen'; // queen, rook, king, pawn
+        let currentGameMode = 'human_human'; // human_human (default), human_ai, ai_human, ai_ai
+        let aiDifficulty = 'optimal'; // optimal, casual
 
-        // Strategy Overlays
-        let showHeatmap = true;
+        let tokenX = 7;
+        let tokenY = 7;
+
+        let grundyGrid = [];
+        let moveHistory = [];
+        let currentPlayer = 1; // 1 or 2
+        let gameActive = true;
+        let hoveredCell = null; // [x, y] if hovered over a valid target
+
+        // Visual Toggles
+        let showHeatmap = false;
         let showGrundy = false;
-        let showHints = true;
+        let showValidMoves = true; // ON by default
         let soundEnabled = true;
 
-        // Grundy Cache Matrix: grundyGrid[x][y]
-        let grundyGrid = [];
+        // AI Simulation State
+        let simInterval = null;
+        let isSimPlaying = false;
+        let simSpeed = 500;
 
-        // Hover tracking
-        let hoveredCell = null;
+        // Ruleset Chess Symbols Mapping
+        const ruleSymbols = {
+            queen: '♛',
+            rook: '♜',
+            king: '♚',
+            pawn: '♟'
+        };
 
-        // Audio Context Synthesizer
+        // Canvas element context
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        // Web Audio Context for Sound Effects
         let audioCtx = null;
 
+        /* ==========================================================================
+           AUDIO SYNTHESIZER (WEB AUDIO API)
+           ========================================================================== */
         function initAudio() {
             if (!audioCtx) {
                 const AudioContext = window.AudioContext || window.webkitAudioContext;
-                if (AudioContext) audioCtx = new AudioContext();
+                if (AudioContext) {
+                    audioCtx = new AudioContext();
+                }
             }
         }
 
-        function playSynthSound(freq, type = 'sine', duration = 0.15, volume = 0.1) {
-            if (!soundEnabled) return;
-            try {
-                initAudio();
-                if (!audioCtx) return;
-                if (audioCtx.state === 'suspended') audioCtx.resume();
+        function toggleAudio() {
+            soundEnabled = !soundEnabled;
+            const btn = document.getElementById('audioBtn');
+            const icon = document.getElementById('audioIcon');
+            const text = document.getElementById('audioText');
 
+            if (soundEnabled) {
+                icon.textContent = '🔊';
+                text.textContent = 'Sound ON';
+                btn.classList.remove('opacity-50');
+            } else {
+                icon.textContent = '🔇';
+                text.textContent = 'Sound OFF';
+                btn.classList.add('opacity-50');
+            }
+        }
+
+        function playSound(type) {
+            if (!soundEnabled) return;
+            initAudio();
+            if (!audioCtx) return;
+
+            try {
                 const osc = audioCtx.createOscillator();
                 const gain = audioCtx.createGain();
-
-                osc.type = type;
-                osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-
-                gain.gain.setValueAtTime(volume, audioCtx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
-
                 osc.connect(gain);
                 gain.connect(audioCtx.destination);
 
-                osc.start();
-                osc.stop(audioCtx.currentTime + duration);
+                const now = audioCtx.currentTime;
+
+                if (type === 'move') {
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(440, now);
+                    osc.frequency.exponentialRampToValueAtTime(880, now + 0.08);
+                    gain.gain.setValueAtTime(0.15, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+                    osc.start(now);
+                    osc.stop(now + 0.08);
+                } else if (type === 'invalid') {
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(150, now);
+                    osc.frequency.linearRampToValueAtTime(100, now + 0.15);
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+                    osc.start(now);
+                    osc.stop(now + 0.15);
+                } else if (type === 'win') {
+                    // Winning major triad arpeggio
+                    const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+                    notes.forEach((freq, idx) => {
+                        const noteOsc = audioCtx.createOscillator();
+                        const noteGain = audioCtx.createGain();
+                        noteOsc.connect(noteGain);
+                        noteGain.connect(audioCtx.destination);
+
+                        noteOsc.type = 'triangle';
+                        noteOsc.frequency.setValueAtTime(freq, now + idx * 0.1);
+                        noteGain.gain.setValueAtTime(0.2, now + idx * 0.1);
+                        noteGain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.1 + 0.3);
+
+                        noteOsc.start(now + idx * 0.1);
+                        noteOsc.stop(now + idx * 0.1 + 0.3);
+                    });
+                }
             } catch (e) {
-                console.warn('Audio play error', e);
+                // Ignore audio context autoplay restrictions
             }
         }
 
-        function playMoveSound() {
-            playSynthSound(587.33, 'triangle', 0.12, 0.12); // D5
-        }
+        /* ==========================================================================
+           DYNAMIC SPRAGUE-GRUNDY (MEX) SOLVER
+           ========================================================================== */
+        function calculateGrundyGrid() {
+            // Allocate W x H matrix
+            grundyGrid = Array.from({ length: gridW }, () => new Array(gridH).fill(0));
 
-        function playWinSound() {
-            if (!soundEnabled) return;
-            const notes = [523.25, 659.25, 783.99, 1046.50]; // C E G C
-            notes.forEach((freq, idx) => {
-                setTimeout(() => playSynthSound(freq, 'sine', 0.25, 0.15), idx * 120);
-            });
-        }
-
-        function playErrorSound() {
-            playSynthSound(150, 'sawtooth', 0.2, 0.1);
-        }
-
-        /**
-         * Recomputes Grundy values G(x,y) for all cells in gridW x gridH for the selected ruleset.
-         */
-        function recomputeGrundyGrid() {
-            grundyGrid = Array.from({ length: gridW }, () => new Int32Array(gridH));
-
+            // Dynamic Programming order: calculate G(x,y) from (0,0) upwards
             for (let x = 0; x < gridW; x++) {
                 for (let y = 0; y < gridH; y++) {
                     if (x === 0 && y === 0) {
-                        grundyGrid[0][0] = 0;
+                        grundyGrid[0][0] = 0; // Terminal position is 0
                         continue;
                     }
 
-                    const reachableMoves = getValidMovesFrom(x, y);
-                    const seenGrundyValues = new Set();
+                    const reachableGrundyValues = new Set();
+                    const validMoves = getValidMovesFrom(x, y);
 
-                    for (let i = 0; i < reachableMoves.length; i++) {
-                        const m = reachableMoves[i];
-                        seenGrundyValues.add(grundyGrid[m.x][m.y]);
+                    for (const [nx, ny] of validMoves) {
+                        reachableGrundyValues.add(grundyGrid[nx][ny]);
                     }
 
-                    // Compute MEX (Minimum Excluded non-negative integer)
+                    // MEX (Minimum Excluded Non-Negative Integer)
                     let mex = 0;
-                    while (seenGrundyValues.has(mex)) {
+                    while (reachableGrundyValues.has(mex)) {
                         mex++;
                     }
                     grundyGrid[x][y] = mex;
@@ -585,600 +552,658 @@
             }
         }
 
-        /**
-         * Returns array of valid move coordinates {x, y} reachable from (fromX, fromY)
-         */
-        function getValidMovesFrom(fromX, fromY) {
+        /* ==========================================================================
+           RULESETS & VALID MOVE GENERATOR
+           ========================================================================== */
+        function getValidMovesFrom(x, y) {
             const moves = [];
 
-            if (ruleset === 'wythoff') {
-                // Horizontal Left
-                for (let k = 1; k <= fromX; k++) moves.push({ x: fromX - k, y: fromY });
-                // Vertical Down
-                for (let k = 1; k <= fromY; k++) moves.push({ x: fromX, y: fromY - k });
-                // Diagonal Down-Left
-                const maxDiag = Math.min(fromX, fromY);
-                for (let k = 1; k <= maxDiag; k++) moves.push({ x: fromX - k, y: fromY - k });
-
-            } else if (ruleset === 'rook') {
-                // Horizontal Left
-                for (let k = 1; k <= fromX; k++) moves.push({ x: fromX - k, y: fromY });
-                // Vertical Down
-                for (let k = 1; k <= fromY; k++) moves.push({ x: fromX, y: fromY - k });
-
-            } else if (ruleset === 'king') {
-                // 1 space left, down, or diagonal down-left
-                if (fromX >= 1) moves.push({ x: fromX - 1, y: fromY });
-                if (fromY >= 1) moves.push({ x: fromX, y: fromY - 1 });
-                if (fromX >= 1 && fromY >= 1) moves.push({ x: fromX - 1, y: fromY - 1 });
+            if (currentRuleset === 'queen') {
+                // Wythoff's Nim: West, South, or South-West diagonal any distance
+                // 1. Move West (left)
+                for (let k = 1; k <= x; k++) moves.push([x - k, y]);
+                // 2. Move South (down)
+                for (let k = 1; k <= y; k++) moves.push([x, y - k]);
+                // 3. Move South-West (diagonal down-left)
+                for (let k = 1; k <= Math.min(x, y); k++) moves.push([x - k, y - k]);
+            } 
+            else if (currentRuleset === 'rook') {
+                // Rook Nim (2-Pile Nim): West or South any distance
+                for (let k = 1; k <= x; k++) moves.push([x - k, y]);
+                for (let k = 1; k <= y; k++) moves.push([x, y - k]);
+            } 
+            else if (currentRuleset === 'king') {
+                // King Nim: West 1, South 1, or South-West 1 step
+                if (x > 0) moves.push([x - 1, y]);
+                if (y > 0) moves.push([x, y - 1]);
+                if (x > 0 && y > 0) moves.push([x - 1, y - 1]);
+            } 
+            else if (currentRuleset === 'pawn') {
+                // Pawn Nim: West 1 OR South 1 step only
+                if (x > 0) moves.push([x - 1, y]);
+                if (y > 0) moves.push([x, y - 1]);
             }
 
             return moves;
         }
 
-        /**
-         * Checks if moving from (fromX, fromY) to (toX, toY) is valid under current ruleset
-         */
-        function isValidMove(fromX, fromY, toX, toY) {
-            if (toX < 0 || toX >= gridW || toY < 0 || toY >= gridH) return false;
-            if (fromX === toX && fromY === toY) return false;
-
-            const dx = fromX - toX;
-            const dy = fromY - toY;
-
-            if (ruleset === 'wythoff') {
-                if (dy === 0 && dx > 0) return true; // Left
-                if (dx === 0 && dy > 0) return true; // Down
-                if (dx > 0 && dy > 0 && dx === dy) return true; // Diagonal
-                return false;
-            } else if (ruleset === 'rook') {
-                if (dy === 0 && dx > 0) return true; // Left
-                if (dx === 0 && dy > 0) return true; // Down
-                return false;
-            } else if (ruleset === 'king') {
-                if (dx >= 0 && dy >= 0 && (dx <= 1 && dy <= 1) && (dx + dy > 0)) return true;
-                return false;
-            }
-            return false;
-        }
-
-        function executeMove(targetX, targetY) {
-            if (!gameActive || isAiThinking) return;
-
-            if (!isValidMove(tokenPos.x, tokenPos.y, targetX, targetY)) {
-                playErrorSound();
-                return;
-            }
-
-            const prevPos = { ...tokenPos };
-            const prevGrundy = grundyGrid[prevPos.x][prevPos.y];
-            const nextGrundy = grundyGrid[targetX][targetY];
-
-            // Update state
-            tokenPos = { x: targetX, y: targetY };
-            playMoveSound();
-
-            // Log move history
-            const pName = getPlayerName(currentPlayer);
-            moveHistory.unshift({
-                turn: turnCount,
-                player: pName,
-                from: prevPos,
-                to: { x: targetX, y: targetY },
-                gFrom: prevGrundy,
-                gTo: nextGrundy
-            });
-
-            // Check Win Condition
-            if (targetX === 0 && targetY === 0) {
-                gameActive = false;
-                renderUI();
-                playWinSound();
-                triggerConfetti();
-                showVictoryModal(pName);
-                return;
-            }
-
-            // Switch turn
-            currentPlayer = currentPlayer === 1 ? 2 : 1;
-            turnCount++;
-
-            renderUI();
-            checkAndTriggerAI();
-        }
-
-        function getPlayerName(pId) {
-            if (playerMode === 'human_vs_human') return `Player ${pId}`;
-            if (playerMode === 'ai_vs_ai') return `AI Bot ${pId}`;
-            return pId === 1 ? 'Human' : 'AI Bot';
-        }
-
-        function checkAndTriggerAI() {
-            if (!gameActive) return;
-
-            const isP1Ai = (playerMode === 'ai_vs_ai');
-            const isP2Ai = (playerMode === 'human_vs_ai_optimal' || playerMode === 'human_vs_ai_easy' || playerMode === 'ai_vs_ai');
-
-            const isAiTurn = (currentPlayer === 1 && isP1Ai) || (currentPlayer === 2 && isP2Ai);
-
-            if (isAiTurn) {
-                isAiThinking = true;
-                document.getElementById('ai-thinking-indicator').classList.remove('hidden');
-                document.getElementById('ai-thinking-indicator').classList.add('flex');
-
-                const delay = playerMode === 'ai_vs_ai' ? 600 : 700;
-
-                setTimeout(() => {
-                    isAiThinking = false;
-                    document.getElementById('ai-thinking-indicator').classList.add('hidden');
-                    document.getElementById('ai-thinking-indicator').classList.remove('flex');
-
-                    makeAiMove();
-                }, delay);
-            }
-        }
-
-        function makeAiMove() {
-            if (!gameActive) return;
-
-            const validMoves = getValidMovesFrom(tokenPos.x, tokenPos.y);
-            if (validMoves.length === 0) return;
-
-            // Find all winning moves (moves to Grundy = 0)
-            const winningMoves = validMoves.filter(m => grundyGrid[m.x][m.y] === 0);
-
-            let chosenMove = null;
-
-            const isEasy = (playerMode === 'human_vs_ai_easy' && currentPlayer === 2);
-
-            if (isEasy && Math.random() < 0.45) {
-                // Easy AI: 45% chance to play random valid move
-                chosenMove = validMoves[Math.floor(Math.random() * validMoves.length)];
-            } else if (winningMoves.length > 0) {
-                // Optimal Play: move to Grundy = 0
-                chosenMove = winningMoves[Math.floor(Math.random() * winningMoves.length)];
-            } else {
-                // In a P-position (G=0): no winning move exists, pick random valid move
-                chosenMove = validMoves[Math.floor(Math.random() * validMoves.length)];
-            }
-
-            if (chosenMove) {
-                executeMove(chosenMove.x, chosenMove.y);
-            }
-        }
-
-        function renderCanvas() {
-            const canvas = document.getElementById('game-canvas');
-            if (!canvas) return;
-
-            const ctx = canvas.getContext('2d');
-            const rect = canvas.getBoundingClientRect();
-
-            // Handle High DPI displays
+        /* ==========================================================================
+           CANVAS RENDERER & COLOR HIGHLIGHT MOVE VISUALIZER
+           ========================================================================== */
+        function resizeCanvas() {
+            const container = canvas.parentElement;
+            const size = Math.min(container.clientWidth - 32, 500);
+            
             const dpr = window.devicePixelRatio || 1;
-            canvas.width = rect.width * dpr;
-            canvas.height = rect.height * dpr;
+            canvas.width = size * dpr;
+            canvas.height = size * dpr;
+            canvas.style.width = size + 'px';
+            canvas.style.height = size + 'px';
+            
             ctx.scale(dpr, dpr);
+            drawCanvas();
+        }
 
-            const width = rect.width;
-            const height = rect.height;
+        function drawCanvas() {
+            // Read toggle states directly from UI checkboxes
+            showHeatmap = document.getElementById('toggleHeatmap')?.checked || false;
+            showGrundy = document.getElementById('toggleGrundy')?.checked || false;
+            showValidMoves = document.getElementById('toggleValidMoves')?.checked ?? true;
 
-            const cellW = width / gridW;
-            const cellH = height / gridH;
+            const displaySize = parseFloat(canvas.style.width) || 450;
+            ctx.clearRect(0, 0, displaySize, displaySize);
 
-            // Clear Background
-            ctx.fillStyle = '#090d16';
-            ctx.fillRect(0, 0, width, height);
+            const padding = 34;
+            const boardSize = displaySize - padding * 2;
+            const cellW = boardSize / gridW;
+            const cellH = boardSize / gridH;
 
-            // Get valid moves from current position for hover/hint trajectory
-            const validMoves = getValidMovesFrom(tokenPos.x, tokenPos.y);
-            const validMoveMap = new Set(validMoves.map(m => `${m.x},${m.y}`));
+            const validDestinations = gameActive ? getValidMovesFrom(tokenX, tokenY) : [];
+            const isValidSet = new Set(validDestinations.map(([vx, vy]) => `${vx},${vy}`));
 
-            // Render Cells (Cartesian y=0 at bottom)
+            // 1. Render Cells & Color Highlights
             for (let x = 0; x < gridW; x++) {
                 for (let y = 0; y < gridH; y++) {
-                    // Map Cartesian (x,y) to Canvas Pixel (px, py)
-                    // Cartesian y=0 is at canvas bottom (gridH - 1 - y)
-                    const canvasX = x * cellW;
-                    const canvasY = (gridH - 1 - y) * cellH;
+                    const cellCanvasX = padding + x * cellW;
+                    const cellCanvasY = padding + (gridH - 1 - y) * cellH; // Cartesian Y flip (0,0 at bottom-left)
 
                     const gVal = grundyGrid[x][y];
                     const isPPos = (gVal === 0);
-                    const isTarget = (x === 0 && y === 0);
-                    const isTokenCell = (x === tokenPos.x && y === tokenPos.y);
-                    const isValidTarget = validMoveMap.has(`${x},${y}`);
-                    const isHovered = hoveredCell && hoveredCell.x === x && hoveredCell.y === y;
+                    const isValidMove = isValidSet.has(`${x},${y}`);
+                    const isHovered = hoveredCell && hoveredCell[0] === x && hoveredCell[1] === y && isValidMove;
 
-                    // Fill color based on Heatmap mode
+                    // Base Cell Fill
                     if (showHeatmap) {
-                        if (isTarget) {
-                            ctx.fillStyle = 'rgba(16, 185, 129, 0.25)'; // Bright Emerald
+                        if (x === 0 && y === 0) {
+                            ctx.fillStyle = 'rgba(16, 185, 129, 0.45)'; // Sink terminal emerald
                         } else if (isPPos) {
-                            ctx.fillStyle = 'rgba(16, 185, 129, 0.12)'; // Soft Emerald P-Position
+                            ctx.fillStyle = 'rgba(16, 185, 129, 0.28)'; // Emerald P-Position
                         } else {
-                            ctx.fillStyle = 'rgba(15, 23, 42, 0.6)'; // Soft Dark N-Position
+                            ctx.fillStyle = 'rgba(245, 158, 11, 0.16)'; // Amber N-Position
                         }
                     } else {
-                        ctx.fillStyle = (x + y) % 2 === 0 ? 'rgba(15, 23, 42, 0.8)' : 'rgba(30, 41, 59, 0.5)';
+                        ctx.fillStyle = (x + y) % 2 === 0 ? 'rgba(30, 41, 59, 0.7)' : 'rgba(15, 23, 42, 0.7)';
                     }
-                    ctx.fillRect(canvasX, canvasY, cellW, cellH);
+                    ctx.fillRect(cellCanvasX, cellCanvasY, cellW, cellH);
 
-                    // Valid Move Target Highlight
-                    if (isValidTarget && showHints) {
-                        if (isPPos) {
-                            // Winning move target (G=0)
-                            ctx.fillStyle = 'rgba(245, 158, 11, 0.25)'; // Amber glow
-                            ctx.fillRect(canvasX, canvasY, cellW, cellH);
-                            ctx.strokeStyle = '#f59e0b';
+                    // POSSIBLE MOVE COLOR HIGHLIGHTS (Vibrant Cyan Tint & Glowing Target Nodes)
+                    if (showValidMoves && isValidMove) {
+                        if (isHovered) {
+                            // Hovered Move Target Highlight
+                            ctx.fillStyle = 'rgba(14, 165, 233, 0.45)';
+                            ctx.fillRect(cellCanvasX, cellCanvasY, cellW, cellH);
+
+                            ctx.strokeStyle = '#38bdf8';
+                            ctx.lineWidth = 2.5;
+                            ctx.strokeRect(cellCanvasX + 1.5, cellCanvasY + 1.5, cellW - 3, cellH - 3);
+
+                            // Inner Glow Target Dot
+                            ctx.beginPath();
+                            ctx.arc(cellCanvasX + cellW / 2, cellCanvasY + cellH / 2, Math.min(cellW, cellH) * 0.18, 0, Math.PI * 2);
+                            ctx.fillStyle = '#38bdf8';
+                            ctx.fill();
+                        } else {
+                            // Standard Target Color Highlight
+                            ctx.fillStyle = 'rgba(6, 182, 212, 0.22)';
+                            ctx.fillRect(cellCanvasX, cellCanvasY, cellW, cellH);
+
+                            ctx.strokeStyle = 'rgba(6, 182, 212, 0.7)';
                             ctx.lineWidth = 1.5;
-                            ctx.strokeRect(canvasX + 2, canvasY + 2, cellW - 4, cellH - 4);
+                            ctx.strokeRect(cellCanvasX + 2, cellCanvasY + 2, cellW - 4, cellH - 4);
+
+                            // Target Node Circle Indicator
+                            ctx.beginPath();
+                            ctx.arc(cellCanvasX + cellW / 2, cellCanvasY + cellH / 2, Math.min(cellW, cellH) * 0.12, 0, Math.PI * 2);
+                            ctx.fillStyle = 'rgba(6, 182, 212, 0.8)';
+                            ctx.fill();
                         }
                     }
 
-                    // Hovered Cell Highlight
-                    if (isHovered && isValidTarget) {
-                        ctx.fillStyle = 'rgba(6, 182, 212, 0.35)';
-                        ctx.fillRect(canvasX, canvasY, cellW, cellH);
-                    }
+                    // Grid Cell Borders
+                    ctx.strokeStyle = 'rgba(51, 65, 85, 0.4)';
+                    ctx.lineWidth = 1;
+                    ctx.strokeRect(cellCanvasX, cellCanvasY, cellW, cellH);
 
-                    // Cell Borders
-                    ctx.strokeStyle = isTarget ? 'rgba(16, 185, 129, 0.8)' : 'rgba(51, 65, 85, 0.4)';
-                    ctx.lineWidth = isTarget ? 2 : 1;
-                    ctx.strokeRect(canvasX, canvasY, cellW, cellH);
-
-                    // Render Coordinate / Grundy overlay text
-                    const fontSize = Math.max(9, Math.min(13, Math.floor(cellH * 0.28)));
-                    ctx.font = `${fontSize}px "JetBrains Mono", monospace`;
-                    ctx.textAlign = 'center';
-                    ctx.textBaseline = 'middle';
-
+                    // Render Grundy Text Overlay
                     if (showGrundy) {
-                        ctx.fillStyle = isPPos ? '#10b981' : '#94a3b8';
-                        ctx.fillText(`G=${gVal}`, canvasX + cellW / 2, canvasY + cellH / 2);
-                    } else {
-                        ctx.fillStyle = 'rgba(148, 163, 184, 0.35)';
-                        ctx.fillText(`${x},${y}`, canvasX + cellW / 2, canvasY + cellH / 2);
+                        ctx.fillStyle = isPPos ? '#34d399' : '#fbbf24';
+                        const fontSize = Math.max(10, Math.min(16, Math.floor(cellH * 0.35)));
+                        ctx.font = `bold ${fontSize}px monospace`;
+                        ctx.textAlign = 'center';
+                        ctx.textBaseline = 'middle';
+                        ctx.fillText(`G:${gVal}`, cellCanvasX + cellW / 2, cellCanvasY + cellH / 2);
                     }
                 }
             }
 
-            // Render Target Cell (0,0) Golden Flag/Star
-            const targetPx = 0;
-            const targetPy = (gridH - 1) * cellH;
+            // 2. Render Axis Labels (Cartesian Coordinates)
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '10px monospace';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'top';
+
+            for (let x = 0; x < gridW; x++) {
+                const cx = padding + x * cellW + cellW / 2;
+                ctx.fillText(x.toString(), cx, displaySize - padding + 6);
+            }
+
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'middle';
+            for (let y = 0; y < gridH; y++) {
+                const cy = padding + (gridH - 1 - y) * cellH + cellH / 2;
+                ctx.fillText(y.toString(), padding - 6, cy);
+            }
+
+            // Render Terminal Sink Border Highlight at (0,0)
             ctx.strokeStyle = '#10b981';
-            ctx.lineWidth = 3;
-            ctx.strokeRect(targetPx + 2, targetPy + 2, cellW - 4, cellH - 4);
+            ctx.lineWidth = 2;
+            ctx.strokeRect(padding + 1, padding + (gridH - 1) * cellH + 1, cellW - 2, cellH - 2);
 
-            // Render Trajectory Vector Arrow if Hovering a Valid Target
-            if (hoveredCell && validMoveMap.has(`${hoveredCell.x},${hoveredCell.y}`)) {
-                const startX = tokenPos.x * cellW + cellW / 2;
-                const startY = (gridH - 1 - tokenPos.y) * cellH + cellH / 2;
-                const endX = hoveredCell.x * cellW + cellW / 2;
-                const endY = (gridH - 1 - hoveredCell.y) * cellH + cellH / 2;
+            // 3. Render Active Piece / Token
+            const tokenCanvasX = padding + tokenX * cellW + cellW / 2;
+            const tokenCanvasY = padding + (gridH - 1 - tokenY) * cellH + cellH / 2;
+            const tokenRadius = Math.min(cellW, cellH) * 0.38;
 
-                ctx.beginPath();
-                ctx.moveTo(startX, startY);
-                ctx.lineTo(endX, endY);
-                ctx.strokeStyle = '#06b6d4';
-                ctx.lineWidth = 3;
-                ctx.setLineDash([6, 4]);
-                ctx.stroke();
-                ctx.setLineDash([]);
-            }
-
-            // Render Glowing Active Token
-            const tokenPx = tokenPos.x * cellW + cellW / 2;
-            const tokenPy = (gridH - 1 - tokenPos.y) * cellH + cellH / 2;
-            const radius = Math.min(cellW, cellH) * 0.32;
-
-            // Outer Glow
-            const gradient = ctx.createRadialGradient(tokenPx, tokenPy, radius * 0.2, tokenPx, tokenPy, radius * 1.8);
-            gradient.addColorStop(0, 'rgba(6, 182, 212, 0.8)');
-            gradient.addColorStop(0.5, 'rgba(6, 182, 212, 0.3)');
-            gradient.addColorStop(1, 'rgba(6, 182, 212, 0)');
-
-            ctx.fillStyle = gradient;
+            // Outer Glow Ring
             ctx.beginPath();
-            ctx.arc(tokenPx, tokenPy, radius * 1.8, 0, Math.PI * 2);
+            ctx.arc(tokenCanvasX, tokenCanvasY, tokenRadius + 3, 0, Math.PI * 2);
+            ctx.fillStyle = currentPlayer === 1 ? 'rgba(6, 182, 212, 0.4)' : 'rgba(168, 85, 247, 0.4)';
             ctx.fill();
 
-            // Inner Core Circle
-            ctx.fillStyle = '#06b6d4';
+            // Token Body
             ctx.beginPath();
-            ctx.arc(tokenPx, tokenPy, radius, 0, Math.PI * 2);
+            ctx.arc(tokenCanvasX, tokenCanvasY, tokenRadius, 0, Math.PI * 2);
+            ctx.fillStyle = currentPlayer === 1 ? '#0891b2' : '#9333ea';
             ctx.fill();
-
-            ctx.strokeStyle = '#f8fafc';
-            ctx.lineWidth = 2.5;
+            ctx.strokeStyle = '#ffffff';
+            ctx.lineWidth = 2;
             ctx.stroke();
+
+            // Chess Symbol Inside Token
+            ctx.fillStyle = '#ffffff';
+            const iconSize = Math.max(14, Math.min(24, Math.floor(tokenRadius * 1.2)));
+            ctx.font = `${iconSize}px sans-serif`;
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(ruleSymbols[currentRuleset], tokenCanvasX, tokenCanvasY + 1);
+
+            // Update UI Top Badges
+            document.getElementById('tokenPosDisplay').textContent = `(${tokenX}, ${tokenY})`;
+            document.getElementById('tokenGrundyDisplay').textContent = `G = ${grundyGrid[tokenX][tokenY]}`;
         }
 
-        function renderUI() {
-            // Update Canvas
-            renderCanvas();
+        /* ==========================================================================
+           INTERACTION & CANVAS INPUT HANDLERS
+           ========================================================================== */
+        function getCellFromCoords(clientX, clientY) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / (rect.width * (window.devicePixelRatio || 1));
+            const scaleY = canvas.height / (rect.height * (window.devicePixelRatio || 1));
 
-            // Current Grundy and Position Status
-            const currentG = grundyGrid[tokenPos.x][tokenPos.y];
-            const isPPos = (currentG === 0);
+            const displaySize = parseFloat(canvas.style.width) || 450;
+            const padding = 34;
+            const boardSize = displaySize - padding * 2;
+            const cellW = boardSize / gridW;
+            const cellH = boardSize / gridH;
 
-            document.getElementById('diag-coord').innerText = `(${tokenPos.x}, ${tokenPos.y})`;
-            document.getElementById('diag-grundy').innerText = currentG;
+            const clickX = (clientX - rect.left);
+            const clickY = (clientY - rect.top);
 
-            const statusBadge = document.getElementById('position-status-badge');
-            const classCard = document.getElementById('diag-class-card');
-
-            if (isPPos) {
-                statusBadge.className = 'px-3 py-1.5 rounded-lg text-xs font-mono font-bold flex items-center space-x-1.5 bg-emerald-950/80 border border-emerald-500/50 text-emerald-400 glow-emerald';
-                statusBadge.innerHTML = `<span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span><span>STATE: P-POSITION (SAFE / G=0)</span>`;
-
-                classCard.className = 'p-3.5 rounded-xl border bg-emerald-950/30 border-emerald-500/30 space-y-1 text-xs';
-                classCard.innerHTML = `
-                    <div class="text-emerald-400 font-bold font-mono uppercase flex items-center gap-1.5">
-                        <i data-lucide="shield" class="w-4 h-4"></i>
-                        <span>P-Position (Previous Player Advantage)</span>
-                    </div>
-                    <p class="text-slate-300">Token is at a zero-Grundy state. Any valid move will leave G > 0 for your opponent, allowing them to force a win under optimal play.</p>
-                `;
-            } else {
-                statusBadge.className = 'px-3 py-1.5 rounded-lg text-xs font-mono font-bold flex items-center space-x-1.5 bg-amber-950/80 border border-amber-500/50 text-amber-400 glow-amber';
-                statusBadge.innerHTML = `<span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span><span>STATE: N-POSITION (WINNING / G=${currentG})</span>`;
-
-                classCard.className = 'p-3.5 rounded-xl border bg-amber-950/30 border-amber-500/30 space-y-1 text-xs';
-                classCard.innerHTML = `
-                    <div class="text-amber-400 font-bold font-mono uppercase flex items-center gap-1.5">
-                        <i data-lucide="zap" class="w-4 h-4"></i>
-                        <span>N-Position (Next Player Winning State)</span>
-                    </div>
-                    <p class="text-slate-300">Grundy value G > 0. A winning move exists! Transition to a G = 0 state to force a guaranteed victory.</p>
-                `;
+            if (clickX < padding || clickX > displaySize - padding || clickY < padding || clickY > displaySize - padding) {
+                return null;
             }
 
-            // Current Turn Player Display
-            const playerDisp = document.getElementById('current-player-display');
-            const pName = getPlayerName(currentPlayer);
-            playerDisp.innerText = `TURN ${turnCount}: ${pName.toUpperCase()}`;
+            const x = Math.floor((clickX - padding) / cellW);
+            const yFromTop = Math.floor((clickY - padding) / cellH);
+            const y = gridH - 1 - yFromTop; // Cartesian Y flip
 
-            // Recommended Winning Moves List
-            const validMoves = getValidMovesFrom(tokenPos.x, tokenPos.y);
-            const winningMoves = validMoves.filter(m => grundyGrid[m.x][m.y] === 0);
-
-            document.getElementById('winning-moves-count').innerText = `${winningMoves.length} OPTIMAL MOVES`;
-            const movesContainer = document.getElementById('winning-moves-list');
-
-            if (winningMoves.length > 0) {
-                movesContainer.innerHTML = winningMoves.map(m => `
-                    <button onclick="executeMove(${m.x}, ${m.y})" class="w-full text-left p-2 rounded-lg bg-emerald-950/50 hover:bg-emerald-900/80 border border-emerald-500/40 text-emerald-300 flex items-center justify-between transition">
-                        <span>Move to (${m.x}, ${m.y})</span>
-                        <span class="text-[10px] bg-emerald-500 text-slate-950 font-bold px-1.5 py-0.5 rounded">G=0 WIN</span>
-                    </button>
-                `).join('');
-            } else {
-                movesContainer.innerHTML = `
-                    <div class="p-2 bg-slate-950 border border-slate-800 rounded-lg text-slate-400 italic text-[11px]">
-                        No G=0 move exists from this position. Opponent holds winning advantage if playing optimally.
-                    </div>
-                `;
+            if (x >= 0 && x < gridW && y >= 0 && y < gridH) {
+                return [x, y];
             }
-
-            // Update Move History Log
-            const historyContainer = document.getElementById('move-history-container');
-            document.getElementById('turn-counter-badge').innerText = `TURN ${turnCount}`;
-
-            if (moveHistory.length > 0) {
-                historyContainer.innerHTML = moveHistory.map(h => `
-                    <div class="p-2 bg-slate-950 border border-slate-800/80 rounded-lg flex items-center justify-between text-slate-300">
-                        <div>
-                            <span class="text-cyan-400 font-bold">#${h.turn} ${h.player}:</span>
-                            <span>(${h.from.x},${h.from.y}) → (${h.to.x},${h.to.y})</span>
-                        </div>
-                        <div class="text-[10px] text-slate-400 font-mono">
-                            G: ${h.gFrom} → <span class="${h.gTo === 0 ? 'text-emerald-400 font-bold' : 'text-amber-400'}">${h.gTo}</span>
-                        </div>
-                    </div>
-                `).join('');
-            }
-
-            lucide.createIcons();
+            return null;
         }
 
-        function setupCanvasInteraction() {
-            const canvas = document.getElementById('game-canvas');
-            if (!canvas) return;
-
-            function getCanvasCoords(e) {
-                const rect = canvas.getBoundingClientRect();
-                const clientX = e.clientX || (e.touches && e.touches[0] ? e.touches[0].clientX : 0);
-                const clientY = e.clientY || (e.touches && e.touches[0] ? e.touches[0].clientY : 0);
-
-                const px = clientX - rect.left;
-                const py = clientY - rect.top;
-
-                const cellW = rect.width / gridW;
-                const cellH = rect.height / gridH;
-
-                const gridX = Math.floor(px / cellW);
-                // Cartesian y=0 at bottom
-                const gridY = gridH - 1 - Math.floor(py / cellH);
-
-                return { x: gridX, y: gridY };
-            }
-
-            canvas.addEventListener('mousemove', (e) => {
-                const coords = getCanvasCoords(e);
-                if (coords.x >= 0 && coords.x < gridW && coords.y >= 0 && coords.y < gridH) {
-                    hoveredCell = coords;
-                    document.getElementById('canvas-pos-hover').innerText = `HOVER: (${coords.x},${coords.y}) G=${grundyGrid[coords.x][coords.y]}`;
-                } else {
-                    hoveredCell = null;
+        canvas.addEventListener('mousemove', (e) => {
+            const cell = getCellFromCoords(e.clientX, e.clientY);
+            if (cell) {
+                if (!hoveredCell || hoveredCell[0] !== cell[0] || hoveredCell[1] !== cell[1]) {
+                    hoveredCell = cell;
+                    drawCanvas();
                 }
-                renderCanvas();
-            });
-
-            canvas.addEventListener('mouseleave', () => {
+            } else if (hoveredCell) {
                 hoveredCell = null;
-                document.getElementById('canvas-pos-hover').innerText = `HOVER: (-,-)`;
-                renderCanvas();
+                drawCanvas();
+            }
+        });
+
+        canvas.addEventListener('mouseleave', () => {
+            if (hoveredCell) {
+                hoveredCell = null;
+                drawCanvas();
+            }
+        });
+
+        canvas.addEventListener('click', (e) => {
+            if (!gameActive) return;
+
+            // Check if it is human turn
+            const isHumanTurn = (
+                (currentGameMode === 'human_human') ||
+                (currentGameMode === 'human_ai' && currentPlayer === 1) ||
+                (currentGameMode === 'ai_human' && currentPlayer === 2)
+            );
+
+            if (!isHumanTurn) return;
+
+            const cell = getCellFromCoords(e.clientX, e.clientY);
+            if (cell) {
+                const [targetX, targetY] = cell;
+                const validMoves = getValidMovesFrom(tokenX, tokenY);
+                const isValid = validMoves.some(([vx, vy]) => vx === targetX && vy === targetY);
+
+                if (isValid) {
+                    executeMove(targetX, targetY);
+                } else {
+                    playSound('invalid');
+                }
+            }
+        });
+
+        /* ==========================================================================
+           GAME LOGIC & MOVE EXECUTION
+           ========================================================================== */
+        function executeMove(targetX, targetY) {
+            const prevX = tokenX;
+            const prevY = tokenY;
+            const prevG = grundyGrid[prevX][prevY];
+
+            tokenX = targetX;
+            tokenY = targetY;
+            const nextG = grundyGrid[tokenX][tokenY];
+
+            const activePlayerName = getPlayerName(currentPlayer);
+
+            // Record move history entry
+            moveHistory.push({
+                player: currentPlayer,
+                playerName: activePlayerName,
+                from: [prevX, prevY],
+                to: [targetX, targetY],
+                fromG: prevG,
+                toG: nextG
             });
 
-            canvas.addEventListener('click', (e) => {
-                const coords = getCanvasCoords(e);
-                executeMove(coords.x, coords.y);
-            });
-        }
+            playSound('move');
 
-        function updateGridDimensions() {
-            gridW = parseInt(document.getElementById('grid-w-slider').value);
-            gridH = parseInt(document.getElementById('grid-h-slider').value);
-
-            document.getElementById('grid-w-val').innerText = gridW;
-            document.getElementById('grid-h-val').innerText = gridH;
-
-            resetGame();
-        }
-
-        function changeRuleset() {
-            ruleset = document.getElementById('ruleset-select').value;
-            const badge = document.getElementById('diag-rule-badge');
-            if (ruleset === 'wythoff') badge.innerText = "WYTHOFF'S QUEEN NIM";
-            else if (ruleset === 'rook') badge.innerText = "ROOK / 2-PILE NIM";
-            else badge.innerText = "KING NIM";
-
-            resetGame();
-        }
-
-        function changePlayerMode() {
-            playerMode = document.getElementById('mode-select').value;
-            resetGame();
-        }
-
-        function toggleOverlay(type) {
-            if (type === 'heatmap') {
-                showHeatmap = !showHeatmap;
-                document.getElementById('btn-toggle-heatmap').classList.toggle('bg-cyan-950', showHeatmap);
-                document.getElementById('btn-toggle-heatmap').classList.toggle('border-cyan-500', showHeatmap);
-            } else if (type === 'grundy') {
-                showGrundy = !showGrundy;
-                document.getElementById('btn-toggle-grundy').classList.toggle('bg-emerald-950', showGrundy);
-                document.getElementById('btn-toggle-grundy').classList.toggle('border-emerald-500', showGrundy);
-            } else if (type === 'hints') {
-                showHints = !showHints;
-                document.getElementById('btn-toggle-hints').classList.toggle('bg-amber-950', showHints);
-                document.getElementById('btn-toggle-hints').classList.toggle('border-amber-500', showHints);
+            // Check Win Condition: Token reached (0,0)
+            if (tokenX === 0 && tokenY === 0) {
+                gameActive = false;
+                pauseSim();
+                drawCanvas();
+                updateTurnUI(true);
+                updateMoveHistoryUI();
+                playSound('win');
+                return;
             }
-            renderCanvas();
-        }
 
-        function toggleSound() {
-            soundEnabled = !soundEnabled;
-            document.getElementById('sound-label').innerText = soundEnabled ? 'Audio: ON' : 'Audio: OFF';
-            document.getElementById('sound-icon').className = soundEnabled ? 'w-3.5 h-3.5 text-purple-400' : 'w-3.5 h-3.5 text-slate-500';
-        }
+            // Switch Player Turn
+            currentPlayer = currentPlayer === 1 ? 2 : 1;
+            updateTurnUI();
+            updateMoveHistoryUI();
+            drawCanvas();
 
-        function randomizeStartPosition() {
-            tokenPos = {
-                x: Math.floor(Math.random() * (gridW - 1)) + 1,
-                y: Math.floor(Math.random() * (gridH - 1)) + 1
-            };
-            resetGame(false);
-        }
-
-        function resetGame(resetPosition = true) {
-            if (resetPosition) {
-                tokenPos = { x: gridW - 1, y: gridH - 1 };
-            }
-            currentPlayer = 1;
-            turnCount = 1;
-            gameActive = true;
-            isAiThinking = false;
-            moveHistory = [];
-
-            recomputeGrundyGrid();
-            renderUI();
-
+            // Trigger AI if necessary
             checkAndTriggerAI();
         }
 
-        function toggleTheoryModal() {
-            document.getElementById('theory-modal').classList.toggle('hidden');
-        }
+        function undoMove() {
+            if (moveHistory.length === 0) return;
 
-        function showVictoryModal(winnerName) {
-            document.getElementById('winner-announcement-text').innerText = `${winnerName} moved the token to (0,0) and claimed victory!`;
-            document.getElementById('stat-total-moves').innerText = moveHistory.length;
+            pauseSim();
 
-            const rBadge = document.getElementById('diag-rule-badge').innerText;
-            document.getElementById('stat-rule-name').innerText = rBadge;
+            // If playing against AI, undo twice if possible to return to Human turn
+            const stepsToUndo = (currentGameMode === 'human_ai' || currentGameMode === 'ai_human') && moveHistory.length >= 2 ? 2 : 1;
 
-            document.getElementById('victory-modal').classList.remove('hidden');
-        }
-
-        function closeVictoryModal() {
-            document.getElementById('victory-modal').classList.add('hidden');
-        }
-
-        function triggerConfetti() {
-            const canvas = document.getElementById('confetti-canvas');
-            if (!canvas) return;
-
-            canvas.classList.remove('hidden');
-            const ctx = canvas.getContext('2d');
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-
-            const particles = [];
-            const colors = ['#06b6d4', '#10b981', '#f59e0b', '#f43f5e', '#a855f7'];
-
-            for (let i = 0; i < 100; i++) {
-                particles.push({
-                    x: canvas.width / 2,
-                    y: canvas.height / 2,
-                    vx: (Math.random() - 0.5) * 14,
-                    vy: (Math.random() - 0.7) * 14,
-                    size: Math.random() * 8 + 4,
-                    color: colors[Math.floor(Math.random() * colors.length)],
-                    life: 1.0,
-                    decay: Math.random() * 0.02 + 0.015
-                });
+            for (let i = 0; i < stepsToUndo; i++) {
+                if (moveHistory.length === 0) break;
+                const lastMove = moveHistory.pop();
+                tokenX = lastMove.from[0];
+                tokenY = lastMove.from[1];
+                currentPlayer = lastMove.player;
             }
 
-            function animateConfetti() {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
-                let active = false;
+            gameActive = true;
+            updateTurnUI();
+            updateMoveHistoryUI();
+            drawCanvas();
+        }
 
-                particles.forEach(p => {
-                    if (p.life > 0) {
-                        active = true;
-                        p.x += p.vx;
-                        p.y += p.vy;
-                        p.vy += 0.25; // gravity
-                        p.life -= p.decay;
+        function randomizePosition() {
+            pauseSim();
+            // Pick a random starting cell other than (0,0)
+            let rx, ry;
+            do {
+                rx = Math.floor(Math.random() * gridW);
+                ry = Math.floor(Math.random() * gridH);
+            } while (rx === 0 && ry === 0 && (gridW > 1 || gridH > 1));
 
-                        ctx.fillStyle = p.color;
-                        ctx.globalAlpha = Math.max(0, p.life);
-                        ctx.fillRect(p.x, p.y, p.size, p.size);
+            tokenX = rx;
+            tokenY = ry;
+            currentPlayer = 1;
+            gameActive = true;
+            moveHistory = [];
+
+            updateTurnUI();
+            updateMoveHistoryUI();
+            drawCanvas();
+
+            if (currentGameMode === 'ai_human') {
+                checkAndTriggerAI();
+            }
+        }
+
+        function resetBoard() {
+            pauseSim();
+            tokenX = gridW - 1;
+            tokenY = gridH - 1;
+            currentPlayer = 1;
+            gameActive = true;
+            moveHistory = [];
+            
+            updateTurnUI();
+            updateMoveHistoryUI();
+            drawCanvas();
+
+            if (currentGameMode === 'ai_human') {
+                checkAndTriggerAI();
+            }
+        }
+
+        /* ==========================================================================
+           AI ENGINE COMPETITORS & SIMULATION
+           ========================================================================== */
+        function checkAndTriggerAI() {
+            if (!gameActive) return;
+
+            const isAITurn = (
+                (currentGameMode === 'human_ai' && currentPlayer === 2) ||
+                (currentGameMode === 'ai_human' && currentPlayer === 1) ||
+                (currentGameMode === 'ai_ai' && isSimPlaying)
+            );
+
+            if (isAITurn) {
+                setTimeout(() => {
+                    if (gameActive && isAITurn) {
+                        makeAIMove();
                     }
-                });
+                }, currentGameMode === 'ai_ai' ? simSpeed : 400);
+            }
+        }
 
-                if (active) {
-                    requestAnimationFrame(animateConfetti);
+        function makeAIMove() {
+            const validMoves = getValidMovesFrom(tokenX, tokenY);
+            if (validMoves.length === 0) return;
+
+            let chosenMove = null;
+
+            // 1. Optimal Grundy AI: Find a move to a P-position (G = 0)
+            const winningMoves = validMoves.filter(([x, y]) => grundyGrid[x][y] === 0);
+
+            if (aiDifficulty === 'optimal') {
+                if (winningMoves.length > 0) {
+                    chosenMove = winningMoves[Math.floor(Math.random() * winningMoves.length)];
                 } else {
-                    canvas.classList.add('hidden');
+                    // Position is already G = 0, pick a random legal move
+                    chosenMove = validMoves[Math.floor(Math.random() * validMoves.length)];
+                }
+            } else {
+                // Casual AI: 70% random, 30% optimal
+                if (Math.random() < 0.3 && winningMoves.length > 0) {
+                    chosenMove = winningMoves[Math.floor(Math.random() * winningMoves.length)];
+                } else {
+                    chosenMove = validMoves[Math.floor(Math.random() * validMoves.length)];
                 }
             }
 
-            animateConfetti();
+            if (chosenMove) {
+                executeMove(chosenMove[0], chosenMove[1]);
+            }
         }
 
-        // Window Load Initialization
-        window.onload = function () {
-            lucide.createIcons();
-            setupCanvasInteraction();
-            recomputeGrundyGrid();
-            renderUI();
+        // Auto Simulation Mode Controls
+        function toggleSimPlay() {
+            if (currentGameMode !== 'ai_ai') return;
 
-            window.addEventListener('resize', () => {
-                renderCanvas();
+            isSimPlaying = !isSimPlaying;
+            const btn = document.getElementById('simPlayBtn');
+
+            if (isSimPlaying) {
+                btn.innerHTML = '<span>⏸</span> Pause Auto-Sim';
+                btn.classList.remove('bg-emerald-600', 'hover:bg-emerald-500');
+                btn.classList.add('bg-amber-600', 'hover:bg-amber-500');
+                checkAndTriggerAI();
+            } else {
+                pauseSim();
+            }
+        }
+
+        function pauseSim() {
+            isSimPlaying = false;
+            const btn = document.getElementById('simPlayBtn');
+            if (btn) {
+                btn.innerHTML = '<span>▶</span> Play Auto-Sim';
+                btn.classList.remove('bg-amber-600', 'hover:bg-amber-500');
+                btn.classList.add('bg-emerald-600', 'hover:bg-emerald-500');
+            }
+        }
+
+        function stepSim() {
+            if (!gameActive) return;
+            pauseSim();
+            makeAIMove();
+        }
+
+        function updateSimSpeed() {
+            simSpeed = parseInt(document.getElementById('speedSlider').value, 10);
+            document.getElementById('speedVal').textContent = `${simSpeed}ms`;
+        }
+
+        function updateAIDifficulty() {
+            aiDifficulty = document.getElementById('aiDifficulty').value;
+        }
+
+        /* ==========================================================================
+           CONFIGURATION SWITCHERS & UI UPDATERS
+           ========================================================================== */
+        function updateGridDimensions() {
+            gridW = parseInt(document.getElementById('widthSlider').value, 10);
+            gridH = parseInt(document.getElementById('heightSlider').value, 10);
+
+            document.getElementById('widthVal').textContent = gridW;
+            document.getElementById('heightVal').textContent = gridH;
+
+            // Recalculate Grundy numbers dynamically
+            calculateGrundyGrid();
+
+            // Clamp token position within bounds
+            tokenX = Math.min(tokenX, gridW - 1);
+            tokenY = Math.min(tokenY, gridH - 1);
+
+            resetBoard();
+        }
+
+        function setRuleset(rulesetKey) {
+            currentRuleset = rulesetKey;
+
+            // Update button UI styles
+            document.querySelectorAll('.ruleset-btn').forEach(btn => {
+                btn.classList.remove('border-cyan-500/50', 'bg-cyan-950/40', 'text-cyan-300', 'shadow-inner');
+                btn.classList.add('border-slate-700', 'bg-slate-900/60', 'text-slate-400');
             });
+
+            const activeBtn = document.getElementById(`btnRule${rulesetKey.charAt(0).toUpperCase() + rulesetKey.slice(1)}`);
+            if (activeBtn) {
+                activeBtn.classList.remove('border-slate-700', 'bg-slate-900/60', 'text-slate-400');
+                activeBtn.classList.add('border-cyan-500/50', 'bg-cyan-950/40', 'text-cyan-300', 'shadow-inner');
+            }
+
+            // Recalculate Grundy grid dynamically for new ruleset
+            calculateGrundyGrid();
+            resetBoard();
+        }
+
+        function setGameMode(modeKey) {
+            currentGameMode = modeKey;
+            pauseSim();
+
+            // Update mode button styles
+            const btnMap = {
+                human_human: 'btnModeHH',
+                human_ai: 'btnModeHA',
+                ai_human: 'btnModeAH',
+                ai_ai: 'btnModeAA'
+            };
+
+            document.querySelectorAll('.gamemode-btn').forEach(btn => {
+                btn.classList.remove('border-cyan-500/50', 'bg-cyan-950/40', 'text-cyan-300', 'shadow-inner');
+                btn.classList.add('border-slate-700', 'bg-slate-900/60', 'text-slate-400');
+            });
+
+            const activeBtn = document.getElementById(btnMap[modeKey]);
+            if (activeBtn) {
+                activeBtn.classList.remove('border-slate-700', 'bg-slate-900/60', 'text-slate-400');
+                activeBtn.classList.add('border-cyan-500/50', 'bg-cyan-950/40', 'text-cyan-300', 'shadow-inner');
+            }
+
+            // Toggle simulation sub-panel visibility
+            const simControls = document.getElementById('simControls');
+            if (modeKey === 'ai_ai') {
+                simControls.classList.remove('hidden');
+            } else {
+                simControls.classList.add('hidden');
+            }
+
+            resetBoard();
+        }
+
+        function getPlayerName(playerNum) {
+            if (currentGameMode === 'human_human') {
+                return playerNum === 1 ? 'Player 1 (Human)' : 'Player 2 (Human)';
+            } else if (currentGameMode === 'human_ai') {
+                return playerNum === 1 ? 'Player 1 (Human)' : 'Player 2 (AI)';
+            } else if (currentGameMode === 'ai_human') {
+                return playerNum === 1 ? 'Player 1 (AI)' : 'Player 2 (Human)';
+            } else {
+                return playerNum === 1 ? 'AI 1' : 'AI 2';
+            }
+        }
+
+        function updateTurnUI(hasWinner = false) {
+            const turnDot = document.getElementById('turnDot');
+            const turnText = document.getElementById('turnText');
+            const statusCard = document.getElementById('statusCard');
+
+            if (hasWinner) {
+                const winnerPlayer = currentPlayer; // Player who made final move
+                const winnerName = getPlayerName(winnerPlayer);
+                turnText.textContent = `🏆 ${winnerName} Wins!`;
+                turnText.className = 'text-base sm:text-lg font-bold text-emerald-400 flex items-center gap-2 animate-bounce';
+                turnDot.className = 'w-3 h-3 rounded-full bg-emerald-400 shadow-lg shadow-emerald-500/50';
+                statusCard.className = 'glass-panel rounded-2xl p-4 border border-emerald-500/50 flex items-center justify-between bg-emerald-950/20';
+            } else {
+                const activeName = getPlayerName(currentPlayer);
+                turnText.textContent = activeName;
+                statusCard.className = 'glass-panel rounded-2xl p-4 border border-cyan-500/30 flex items-center justify-between';
+
+                if (currentPlayer === 1) {
+                    turnText.className = 'text-base sm:text-lg font-bold text-cyan-300 flex items-center gap-2';
+                    turnDot.className = 'w-3 h-3 rounded-full bg-cyan-400 animate-ping';
+                } else {
+                    turnText.className = 'text-base sm:text-lg font-bold text-purple-400 flex items-center gap-2';
+                    turnDot.className = 'w-3 h-3 rounded-full bg-purple-400 animate-ping';
+                }
+            }
+        }
+
+        function updateMoveHistoryUI() {
+            const container = document.getElementById('moveHistoryList');
+            document.getElementById('historyCount').textContent = `${moveHistory.length} Moves`;
+
+            if (moveHistory.length === 0) {
+                container.innerHTML = `
+                    <div class="text-slate-500 text-center py-8 italic font-sans text-xs">
+                        No moves played yet. Click any highlighted target square to make a move!
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = moveHistory.map((m, idx) => {
+                const isPPositionTarget = (m.toG === 0);
+                const isP1 = m.player === 1;
+
+                return `
+                    <div class="p-2 rounded-lg bg-slate-900/80 border border-slate-800 flex items-center justify-between hover:bg-slate-850 transition">
+                        <div class="flex items-center gap-2">
+                            <span class="text-[10px] text-slate-500 font-bold">#${idx + 1}</span>
+                            <span class="w-2 h-2 rounded-full ${isP1 ? 'bg-cyan-400' : 'bg-purple-400'}"></span>
+                            <span class="${isP1 ? 'text-cyan-300' : 'text-purple-300'} font-semibold">${m.playerName}</span>
+                        </div>
+                        
+                        <div class="flex items-center gap-2 text-slate-300 text-[11px]">
+                            <span>(${m.from[0]},${m.from[1]})</span>
+                            <span class="text-slate-500">➔</span>
+                            <span class="font-bold text-slate-100">(${m.to[0]},${m.to[1]})</span>
+                            <span class="px-1.5 py-0.5 rounded text-[10px] ${isPPositionTarget ? 'bg-emerald-950 text-emerald-300 border border-emerald-800' : 'bg-amber-950 text-amber-300 border border-amber-800'}">
+                                G:${m.fromG}➔${m.toG} ${isPPositionTarget ? '★' : ''}
+                            </span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            // Auto scroll to bottom
+            container.scrollTop = container.scrollHeight;
+        }
+
+        /* ==========================================================================
+           MODAL HANDLERS
+           ========================================================================== */
+        function openTheoryModal() {
+            document.getElementById('theoryModal').classList.remove('hidden');
+        }
+
+        function closeTheoryModal() {
+            document.getElementById('theoryModal').classList.add('hidden');
+        }
+
+        /* ==========================================================================
+           INITIALIZATION ON LOAD
+           ========================================================================== */
+        window.onload = function () {
+            calculateGrundyGrid();
+            resizeCanvas();
+            window.addEventListener('resize', resizeCanvas);
         };
     </script>
 </body>
